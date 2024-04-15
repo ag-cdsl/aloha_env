@@ -1,0 +1,16 @@
+api_version: 1.0
+cspace:
+    - fl_joint1
+    - fl_joint2
+    - fl_joint3
+    - fl_joint4
+    - fl_joint5
+    - fl_joint6
+    - fl_joint7
+    - fl_joint8
+root_link: footprint
+default_q: [
+    0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00
+]
+cspace_to_urdf_rules: []
+composite_task_spaces: []
