@@ -1,0 +1,7 @@
+*.pyc
+
+/assets/husky/husky_with_sensors.usd
+/assets/husky/ur5_with_gripper_and_cam_2.usd
+/assets/husky/objects/*
+/logs/*
+/scenes/*
