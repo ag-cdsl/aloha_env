@@ -34,7 +34,7 @@ class AlohaEnv(gymnasium.Env):
         self._max_episode_length = max_episode_length
         self._steps_after_reset = int(rendering_dt / physics_dt)
         from omni.isaac.core import World
-        from omni.isaac.core.objects import VisualCuboid, DynamicCuboid
+        from omni.isaac.core.objects import VisualCuboid, DynamicCuboid, FixedCuboid
         from omni.isaac.core.utils.nucleus import get_assets_root_path
         from omni.isaac.wheeled_robots.controllers.differential_controller import DifferentialController
         # from omni.isaac.wheeled_robots.robots import WheeledRobot
@@ -64,24 +64,38 @@ class AlohaEnv(gymnasium.Env):
             )
         )
         self.jetbot_controller = DifferentialController(name="simple_control", wheel_radius=0.068, wheel_base=0.34)
-        self.target_location = self._my_world.scene.add(
-            VisualCuboid(
-                prim_path="/World/target_location",
-                name="target_location_cube",
-                position=np.array([1.60, 0.3, 0.05]),
-                size=0.2,
-                color=np.array([0, 1.0, 0]),
+        
+        table_height = 0.7
+        cube_size = 0.05
+        
+        self.table = self._my_world.scene.add(
+            FixedCuboid(
+                prim_path="/World/table",
+                name="table",
+                position=np.array([1.60, 0.0, table_height / 2]),
+                size=table_height,
+                color=np.array([0, 0, 1.0]),
             )
         )
         self.goal = self._my_world.scene.add(
             DynamicCuboid(
                 prim_path="/World/new_cube_1",
                 name="visual_cube",
-                position=np.array([1.60, 0.0, 0.05]),
-                size=0.1,
+                position=np.array([1.60, -0.2, table_height + cube_size / 2]),
+                size=cube_size,
                 color=np.array([1.0, 0, 0]),
             )
         )
+        self.target_location = self._my_world.scene.add(
+            VisualCuboid(
+                prim_path="/World/target_location",
+                name="target_location_cube",
+                position=np.array([1.60, 0.2, table_height+0.1]),
+                size=0.2,
+                color=np.array([0, 1.0, 0]),
+            )
+        )
+        
         self.seed(seed)
         self.reward_range = (-float("inf"), float("inf"))
         gymnasium.Env.__init__(self)
