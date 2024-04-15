@@ -16,6 +16,9 @@ from omni.isaac.core.utils.nucleus import get_assets_root_path
 
 
 from models.manipulator_robot import ManipulatorRobot
+from omni.isaac.manipulators.grippers import ParallelGripper
+from omni.isaac.core.utils.types import ArticulationAction
+
 
 from controllers.simple_controller import SimpleMoveController
 
@@ -35,7 +38,8 @@ my_aloha = my_world.scene.add(
     ManipulatorRobot(
         prim_path="/World/my_aloha",
         name="my_aloha",
-        dof_names=[f'fl_joint{i+1}' for i in range(8)],  # Adjusted for the left manipulator
+        end_effector_prim_name= "fl_link6",
+        gripper_dof_names= ["fl_joint7", "fl_joint8"],
         create_robot=True,
         usd_path=aloha_asset_path,
         position=np.array([0, 0.0, 0.005]),
@@ -58,12 +62,12 @@ my_world.scene.add(
 my_world.scene.add_default_ground_plane()
 my_world.reset()
 
-print(my_aloha.dof_indices)
-print(my_aloha.dof_names)
+# print(my_aloha.dof_indices)
+# print(my_aloha.dof_names)
 
 
 # Initialize the controller
-joint_index = 14
+joint_index = [14]
 simple_controller = SimpleMoveController(
     name="simple_move_controller",
     joint_index=joint_index,
@@ -71,13 +75,26 @@ simple_controller = SimpleMoveController(
     frequency=0.5
 )
 
-
+i = 0
 # Main simulation loop
 while simulation_app.is_running():
-    dt = 1.0 / 60.0  # Assuming a simulation step of 1/60 seconds
+    dt = 1.0 / 120.0  # Assuming a simulation step of 1/60 seconds
     actions = simple_controller.forward(dt)
     my_aloha.apply_joint_actions(actions)
-    
-    my_world.step(render=True)
+
+    gripper_positions = my_aloha.gripper.get_joint_positions()
+
+    i += 1
+    gripper_positions = my_aloha.gripper.get_joint_positions()
+    if i < 500:
+            #close the gripper slowly
+        my_aloha.gripper.apply_action(
+            ArticulationAction(joint_positions=[gripper_positions[0] + 0.1, gripper_positions[1] - 0.1]))
+    if i > 500:
+            #open the gripper slowly
+        my_aloha.gripper.apply_action(
+            ArticulationAction(joint_positions=[gripper_positions[0] - 0.1, gripper_positions[1] + 0.1]))
+    if i == 1000:
+        i = 0
 
 simulation_app.close()

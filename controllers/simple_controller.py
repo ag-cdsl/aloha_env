@@ -6,7 +6,7 @@ from typing import List
 
 
 class SimpleMoveController(BaseController):
-    def __init__(self, name: str, joint_index: int, amplitude: float = 1.0, frequency: float = 0.5):
+    def __init__(self, name: str, joint_index: List[int], amplitude: float = 1.0, frequency: float = 0.5):
         super(SimpleMoveController, self).__init__(name=name)
         self.joint_index = joint_index
         self.amplitude = amplitude
@@ -18,7 +18,10 @@ class SimpleMoveController(BaseController):
         joint_position = self.amplitude * np.sin(2 * np.pi * self.frequency * self.time)
         
         # We assume the joint_position applies only to the specified joint
-        actions = ArticulationAction(joint_positions={self.joint_index: joint_position})
+
+        joint_position = {index: joint_position for index in self.joint_index}
+
+        actions = ArticulationAction(joint_positions=joint_position)
         return actions
 
     def reset(self):
