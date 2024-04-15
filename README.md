@@ -14,3 +14,6 @@ main.py
 
 1. [Follow Target](https://github.com/ag-cdsl/aloha_env/blob/Manipulator-Isaac-Version/tasks/follow_target.py)
 
+   *Note: Don't forget to modify the asset path in the task code : ```asset_path = "aloha-isaac/assets/ALOHA.usd" ```
+
+
