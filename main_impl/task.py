@@ -229,9 +229,9 @@ class AlohaTask(BaseTask):
     def calculate_metrics(self) -> dict:
         tloc_pos = self.obs[:, 48:51]
         cube_pos = self.obs[:, 41:44]
-        dist = np.linalg.norm(tloc_pos - cube_pos)
+        dist = torch.linalg.norm(tloc_pos - cube_pos, dim=-1)
         rewards = -dist
-        return torch.as_tensor(rewards)
+        return rewards
 
     def is_done(self) -> bool:
         dones = torch.tensor([False] * self.num_envs, dtype=bool)
