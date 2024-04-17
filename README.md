@@ -28,3 +28,7 @@ Observation components:
 - 41-43: cube position
 - 44-47: cube orientation
 - 48-50: target location position
+
+
+Для добавления новых объектов их нужно добавить на сцену в методе `AlohaTask.set_up_scene` и обновить их положение в `AlohaTask.reset`.
+Для модификации наблюдений изменить `AlohaTask.get_observations`, реворда -- `AlohaTask.calculate_metrics`, действий -- `AlohaTask.pre_physics_step`.
