@@ -1,11 +1,11 @@
 import math
 from pathlib import Path
 
-import carb
 import gymnasium
 import numpy as np
 from gymnasium import spaces
 
+# import omni.isaac.core.tasks as tasks
 
 ALOHA_ASSET_PATH = (
     Path.home()
@@ -34,67 +34,15 @@ class AlohaEnv(gymnasium.Env):
         self._max_episode_length = max_episode_length
         self._steps_after_reset = int(rendering_dt / physics_dt)
         from omni.isaac.core import World
-        from omni.isaac.core.objects import VisualCuboid, DynamicCuboid, FixedCuboid
-        from omni.isaac.core.utils.nucleus import get_assets_root_path
         from omni.isaac.wheeled_robots.controllers.differential_controller import DifferentialController
-        # from omni.isaac.wheeled_robots.robots import WheeledRobot
-        # import sys
-        # sys.path.append("/home/zhang/.local/share/ov/pkg/isaac_sim-2023.1.0/standalone_examples/api/aloha")
-        # from new_wheeled_robot.wheeled_robot import WheeledRobot
-        from .wheeled_robot import WheeledRobot
 
         self._my_world = World(physics_dt=physics_dt, rendering_dt=rendering_dt, stage_units_in_meters=1.0)
-        self._my_world.scene.add_default_ground_plane()
-        assets_root_path = get_assets_root_path()
-        if assets_root_path is None:
-            carb.log_error("Could not find Isaac Sim assets folder")
-            return
-        # jetbot_asset_path = assets_root_path + "/Isaac/Robots/Jetbot/jetbot.usd"
-        # jetbot_asset_path = "/home/zhang/env_RL/3-28/ALOHA.usd"
+        from .task import AlohaTask
+        self.task = AlohaTask("AlohaGenericTask")
+        self._my_world.add_task(self.task)
         
-        self.jetbot = self._my_world.scene.add(
-            WheeledRobot(
-                prim_path="/World/aloha",
-                name="my_jetbot",
-                wheel_dof_names=["left_wheel", "right_wheel"],
-                create_robot=True,
-                usd_path=ALOHA_ASSET_PATH,
-                position=np.array([0, 0.0, 0.005]),
-                orientation=np.array([1.0, 0.0, 0.0, 0.0]),
-            )
-        )
         self.jetbot_controller = DifferentialController(name="simple_control", wheel_radius=0.068, wheel_base=0.34)
-        
-        table_height = 0.7
-        cube_size = 0.05
-        
-        self.table = self._my_world.scene.add(
-            FixedCuboid(
-                prim_path="/World/table",
-                name="table",
-                position=np.array([1.60, 0.0, table_height / 2]),
-                size=table_height,
-                color=np.array([0, 0, 1.0]),
-            )
-        )
-        self.goal = self._my_world.scene.add(
-            DynamicCuboid(
-                prim_path="/World/new_cube_1",
-                name="visual_cube",
-                position=np.array([1.60, -0.2, table_height + cube_size / 2]),
-                size=cube_size,
-                color=np.array([1.0, 0, 0]),
-            )
-        )
-        self.target_location = self._my_world.scene.add(
-            VisualCuboid(
-                prim_path="/World/target_location",
-                name="target_location_cube",
-                position=np.array([1.60, 0.2, table_height+0.1]),
-                size=0.2,
-                color=np.array([0, 1.0, 0]),
-            )
-        )
+        self.manip_controller = None
         
         self.seed(seed)
         self.reward_range = (-float("inf"), float("inf"))
@@ -110,7 +58,6 @@ class AlohaEnv(gymnasium.Env):
         return self._dt
 
     def step(self, action):
-        previous_jetbot_position, _ = self.jetbot.get_world_pose()
         # action forward velocity , angular velocity on [-1, 1]
         raw_forward = action[0]
         raw_angular = action[1]
@@ -126,12 +73,13 @@ class AlohaEnv(gymnasium.Env):
 
         # we apply our actions to the jetbot
         for i in range(self._skip_frame):
-            self.jetbot.apply_wheel_actions(
+            self.task.robot.apply_wheel_actions(
                 self.jetbot_controller.forward(command=[forward_velocity, angular_velocity])
             )
-            self._my_world.step(render=False)
+            # self.manip_controller.apply_action(np.array([1, 1]))
+            self._my_world.step(render=True)
 
-        observations = self.get_observations()
+        observations = self.task.get_observations()
         info = {}
         done = False
         truncated = False
@@ -142,8 +90,8 @@ class AlohaEnv(gymnasium.Env):
         return observations, reward, done, truncated, info
 
     def compute_reward_and_done(self):
-        target_loc_pos, _ = self.target_location.get_world_pose()
-        cube_pos, _ = self.goal.get_world_pose()
+        target_loc_pos, _ = self.task.target_location.get_world_pose()
+        cube_pos, _ = self.task.goal.get_world_pose()
         
         dist = np.linalg.norm(target_loc_pos - cube_pos)
         r = -dist
@@ -153,34 +101,15 @@ class AlohaEnv(gymnasium.Env):
     def reset(self, seed=None):
         self._my_world.reset()
         # self.jetbot_controller.reset()
+        self.manip_controller = self.task.robot.manipulator.get_articulation_controller()
         
         self.reset_counter = 0
         # randomize goal location in circle around robot
         alpha = 2 * math.pi * np.random.rand()
         r = 1.50 * math.sqrt(np.random.rand()) + 0.20
         # self.goal.set_world_pose(np.array([math.sin(alpha) * r, math.cos(alpha) * r, 0.05]))
-        observations = self.get_observations()
+        observations = self.task.get_observations()
         return observations, {}
-
-    def get_observations(self):
-        self._my_world.render()
-        jetbot_world_position, jetbot_world_orientation = self.jetbot.get_world_pose()
-        jetbot_linear_velocity = self.jetbot.get_linear_velocity()
-        jetbot_angular_velocity = self.jetbot.get_angular_velocity()
-        goal_world_position, _ = self.goal.get_world_pose()
-        obs = np.concatenate(
-            [
-                jetbot_world_position,
-                jetbot_world_orientation,
-                jetbot_linear_velocity,
-                jetbot_angular_velocity,
-                goal_world_position,
-            ]
-        )
-        return obs
-
-    def render(self, mode="human"):
-        return
 
     def close(self):
         self._simulation_app.close()
