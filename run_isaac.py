@@ -37,7 +37,7 @@ def traj_gen(a0, step, reverse=False):
 
 
 def main():
-    env = make_aloha_env(5)
+    env = make_aloha_env(2)
 
     i = 0
     obs = env.reset()
@@ -45,8 +45,8 @@ def main():
     gripper_cmd = 0.0
     gripper_cmd_step = 0.03
     
-    arm_1_gen = traj_gen(obs[0, 15:21], 0.03)
-    arm_2_gen = traj_gen(obs[0, 29:35], 0.03, reverse=True)
+    arm_1_gen = traj_gen(obs["observation"][0, 15:21], 0.03)
+    arm_2_gen = traj_gen(obs["observation"][0, 29:35], 0.03, reverse=True)
     
     while env._simulation_app.is_running():
         actions = torch.from_numpy(np.stack([
@@ -78,10 +78,11 @@ def main():
         if i and i % 200 == 0:
             gripper_cmd_step *= -1
         
-        print(i, f"arm_cmd: {arm1_cmd}, {arm2_cmd}")
+        # print(i, f"arm_cmd: {arm1_cmd}, {arm2_cmd}")
         
         obs, r, done, info = env.step(actions)
-        
+        position = obs["observation"][0][:3]
+        print(i, f"position {position}", f"shape observation {obs['observation'].shape}")
         if i == 0:
             time.sleep(1)
         i += 1
