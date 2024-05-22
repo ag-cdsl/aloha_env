@@ -3,12 +3,18 @@ import time
 import numpy as np
 import torch
 
-from main_impl.env import AlohaEnv
-
 from omni.isaac.gym.vec_env import VecEnvBase
 
 
-def make_aloha_env(n_envs, headless=False):
+WRITE_VIDEO = True
+
+
+def make_aloha_env(n_envs=1, headless=False):
+    def render(self, *args, **kwargs):
+        return self._task.render()
+
+    VecEnvBase.render = render
+    
     env = VecEnvBase(headless=headless)
     from main_impl.task import AlohaTask
     task = AlohaTask(name="Aloha", n_envs=n_envs)
@@ -37,7 +43,7 @@ def traj_gen(a0, step, reverse=False):
 
 
 def main():
-    env = make_aloha_env(5)
+    env = make_aloha_env(2)
 
     i = 0
     obs = env.reset()
@@ -47,6 +53,10 @@ def main():
     
     arm_1_gen = traj_gen(obs[0, 15:21], 0.03)
     arm_2_gen = traj_gen(obs[0, 29:35], 0.03, reverse=True)
+    
+    if WRITE_VIDEO:
+        import imageio as iio
+        imgbuf = []
     
     while env._simulation_app.is_running():
         actions = torch.from_numpy(np.stack([
@@ -86,8 +96,16 @@ def main():
             time.sleep(1)
         i += 1
         
-        if i % 2000 == 0:
+        if WRITE_VIDEO:
+            images = env.render()
+            if images is not None:
+                imgbuf.append(images[1])
+        
+        if i % 200 == 0:
             obs = env.reset()
+            if WRITE_VIDEO:
+                iio.mimwrite("cam.mp4", imgbuf[30:])
+                imgbuf.clear()
 
 
 if __name__ == "__main__":

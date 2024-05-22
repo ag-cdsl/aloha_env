@@ -14,10 +14,16 @@ from omni.isaac.core.objects import VisualCuboid, DynamicCuboid, FixedCuboid
 from omni.isaac.core.utils.prims import create_prim, define_prim, delete_prim
 from omni.isaac.core.articulations import ArticulationView
 
+from omni.replicator.isaac.scripts.writers.pytorch_writer import PytorchWriter
+from omni.replicator.isaac.scripts.writers.pytorch_listener import PytorchListener
+import omni.replicator.core as rep
 
+
+# base model: ALOHA.usd
+# model with 1 fl cam: aloha_flattened.usd
 ALOHA_ASSET_PATH = (
     Path.home()
-    / ".local/share/ov/pkg/isaac_sim-2022.1.1/standalone_examples/aloha_env/aloha_rl/ALOHA.usd"
+    / ".local/share/ov/pkg/isaac_sim-2022.1.1/standalone_examples/aloha_env/aloha_rl/aloha_flattened.usd"
 ).as_posix()
 
 
@@ -140,6 +146,7 @@ class AlohaTask(BaseTask):
         
         scene.add_default_ground_plane()
         scene.add(self.robots)
+        self.set_up_camera()
     
     def reset(self, env_ids=None):
         self.robots.set_joint_positions(self.default_robot_joint_positions)
@@ -157,6 +164,22 @@ class AlohaTask(BaseTask):
             t = self.cube_default_translation.copy()
             t[1] += 3 * i
             self.all_cubes[i].set_local_pose(translation=t)
+        
+    def set_up_camera(self) -> None:
+        self.render_products = []
+        
+        for scene_id in range(self.num_envs):
+            # camera_path = f"/World/scene_{scene_id}/aloha/fl_link4/realsense/realsense/husky_rear_left"
+            camera_path = f"/World/scene_{scene_id}/aloha/fl_link6/realsense/realsense/husky_rear_left"
+            render_product = rep.create.render_product(camera_path, resolution=(512, 512))
+            self.render_products.append(render_product)
+        
+        self.pytorch_listener = PytorchListener()
+        rep.WriterRegistry.register(PytorchWriter)
+        self.pytorch_writer = rep.WriterRegistry.get("PytorchWriter")
+        self.pytorch_writer.initialize(listener=self.pytorch_listener, device="cpu")
+        self.pytorch_writer.attach(self.render_products)
+        rep.orchestrator.run()
         
     def post_reset(self) -> None:
         self._wheel_dof_indices = [
@@ -225,6 +248,15 @@ class AlohaTask(BaseTask):
             axis=-1
         )
         return self.obs
+    
+    def render(self):
+        images = self.pytorch_listener.get_rgb_data()
+        if images is not None:
+            obs_buf = images.permute(0, 2, 3, 1).clone().float() / 255.0
+            obs_buf = obs_buf.cpu().detach().numpy()
+        else:
+            obs_buf = None
+        return obs_buf
     
     def calculate_metrics(self) -> dict:
         tloc_pos = self.obs[:, 48:51]
