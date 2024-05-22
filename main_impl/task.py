@@ -278,6 +278,12 @@ class AlohaTask(BaseTask):
         10-15: 6 arm_2 joint position refs
         """
         actions = torch.as_tensor(actions, dtype=torch.float32)
+
+        # Ensure actions are at least 2-dimensional
+        if actions.ndim == 1:
+            actions = actions.unsqueeze(0)  # Add batch dimension if it's not present
+
+
         # control wheel pairs
         # -------------------
         
