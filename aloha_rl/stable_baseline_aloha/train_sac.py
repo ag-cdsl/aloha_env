@@ -24,7 +24,7 @@ checkpoint_callback = CheckpointCallback(save_freq=50000, save_path=log_dir, nam
 
 total_timesteps = 1000000
 
-model = PPSACO("MlpPolicy", my_env, verbose=1,tensorboard_log=log_dir,)
+model = SAC("MlpPolicy", my_env, verbose=1,tensorboard_log=log_dir,)
 
 model.learn(total_timesteps=total_timesteps, callback=checkpoint_callback)
 
