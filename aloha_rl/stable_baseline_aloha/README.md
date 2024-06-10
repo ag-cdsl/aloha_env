@@ -1,8 +1,10 @@
+Файлы - env_obst.py, train_sac.py, eval_sac_obst.py
+
 обучение модели SAC на сервере AIRI -- ./python.sh standalone_examples/base_aloha_env/Aloha/train_sac.py 
 просмотре с помощью omniverse.streaming -- ./python.sh standalone_examples/base_aloha_env/Aloha/train_sac.py -enable omni.kit.livestream.native --no-window
 
 За удаленный просмотр отвечает блок кода 
-# для удаленного просмотра
+//для удаленного просмотра
 config = {
     "renderer": "RayTracedLighting",
     "headless": True,
