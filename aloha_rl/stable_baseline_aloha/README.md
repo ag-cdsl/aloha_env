@@ -16,19 +16,14 @@
 
 За удаленный просмотр отвечает блок кода на строках 8-15 в файле /tasks/env_obst.py 
 
-config = {
+'config = {
     "renderer": "RayTracedLighting",
-    
     "headless": True,
-    
     #headless: False,
-    
     "multi_gpu": False,
-    
     #"active_gpu": gpu_to_use,
-    
     "enable":"omni.kit.livestream.native"
-}
+}'
 
  ### Нужно: 
  - закомментировать строчки "headless": True и "enable":"omni.kit.livestream.native"
