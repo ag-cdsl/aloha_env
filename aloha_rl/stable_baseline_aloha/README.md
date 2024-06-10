@@ -14,7 +14,7 @@
 ```
 ./python.sh stable_baseline_aloha/train_sac.py
 ``` 
-## Тестирование модели:
+### Тестирование модели:
 ```
 ./python.sh stable_baseline_aloha/eval_sac_obst.py
 ```
