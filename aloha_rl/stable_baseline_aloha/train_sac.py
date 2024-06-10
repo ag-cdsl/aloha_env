@@ -11,13 +11,13 @@ import argparse
 
 import carb
 import torch as th
-from tasks.env_obst import JetBotEnv
+from tasks.env_obst import AlphaBaseEnv
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import CheckpointCallback
 
 
-log_dir = "/isaac-sim/standalone_examples/base_aloha_env/Aloha/models/PPO"
-my_env = JetBotEnv(headless=True)
+log_dir = "/isaac-sim/standalone_examples/base_aloha_env/Aloha/models/SAC"
+my_env = AlphaBaseEnv(headless=True)
 
 
 checkpoint_callback = CheckpointCallback(save_freq=50000, save_path=log_dir, name_prefix="test1")
