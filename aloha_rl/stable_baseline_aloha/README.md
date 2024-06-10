@@ -1,14 +1,14 @@
-### Решение задачи навигации с препятствием с помощью RL алогритма SAC 
-# На сервере:
-# Запуск обучения:
+# Решение задачи навигации с препятствием с помощью RL алогритма SAC 
+## На сервере:
+### Запуск обучения:
 ./python.sh standalone_examples/base_aloha_env/Aloha/train_sac.py 
-# Тестирование модели:
+### Тестирование модели:
 ./python.sh standalone_examples/base_aloha_env/Aloha/eval_sac_obst.py -enable omni.kit.livestream.native --no-window
 
-# Локально:
-# Запуск обучения:
+## Локально:
+### Запуск обучения:
 ./python.sh stable_baseline_aloha/train_sac.py 
-# Тестирование модели:
+## Тестирование модели:
 ./python.sh stable_baseline_aloha/eval_sac_obst.py
 
 ## При работе на локальном компьютере:
