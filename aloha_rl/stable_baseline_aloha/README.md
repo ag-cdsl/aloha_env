@@ -1,4 +1,4 @@
-Файлы - env_obst.py, train_sac.py, eval_sac_obst.py
+Файлы - env_obst.py, train_sac.py, eval_sac_obst.py, wheeled_robot.py
 
 обучение модели SAC на сервере AIRI -- ./python.sh standalone_examples/base_aloha_env/Aloha/train_sac.py 
 просмотре с помощью omniverse.streaming -- ./python.sh standalone_examples/base_aloha_env/Aloha/train_sac.py -enable omni.kit.livestream.native --no-window
